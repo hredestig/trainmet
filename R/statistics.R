@@ -296,7 +296,7 @@ oda <- function(x, y, ncomp=NULL, nocomp=0, scale="uv", cv=FALSE) {
       e <- xr - tcrossprod(tt, w)
       tto <- ppo <- wwo <- ttoPrev <- NULL
       if(nocomp > 0) {
-        for(oci <- 1:nocomp) {
+        for(oci in 1:nocomp) {
           tm <- scores(pca(crosspred(e, tt), nPcs=1))
           wo <- tm
           wo <- wo / sqrt(drop(crossprod(wo)))
