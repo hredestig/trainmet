@@ -246,7 +246,7 @@ svdi <- function(x, threshold=0.01, maxSteps=100, ...) {
       estimate <- Bpart %*% X
       x[missing[, index], index] <- estimate
     }
-    count <- count + 1
+    Count <- count + 1
     if (count > 5)
       error <- sqrt(sum((xOld - x)^2)/sum(xOld^2))
     xOld <- x
@@ -254,91 +254,3 @@ svdi <- function(x, threshold=0.01, maxSteps=100, ...) {
   svd(x, ...)
 }
 
-oda <- function(x, y, ncomp=NULL, nocomp=0, scale="uv", cv=FALSE) {
-  if(cv) 
-    seg <- getcvseg(y, ifelse(is.numeric(cv), cv, 7)) else
-  seg <- rbind(1:nrow(x))
-
-  ym <- model.matrix(~-1+y)
-  if(is.factor(y))
-    colnames(ym) <- levels(ym) else
-  colnames(ym) <- unique(ym)
-  if(is.null(ncomp)) ncomp <- ncol(ym) - 1
-  if(ncomp > ncol(ym)) ncomp <- ncol(ym) - 1
-
-  xp <- prep(x, scale, simple=FALSE)
-  yp <- prep(ym, scale, simple=FALSE)
-
-  ssy <- sum(yp$data^2, na.rm=TRUE)
-  ssx <- sum(xp$data^2, na.rm=TRUE)
-
-  for(i in 1:nrow(seg)) {
-    keep <- (1:nrow(x))[!(1:nrow(x)) %in% na.omit(seg[i,])]
-    xi <- x[keep,,drop=FALSE]
-    yi <- ym[keep,,drop=FALSE]
-
-    xr <- xis <- prep(xi, "uv")
-    yr <- yis <- prep(ym, "uv")
-
-    ssxr <- sum(xr^2, na.rm=TRUE)
-    ssyr <- sum(yr^2, na.rm=TRUE)
-    sigma <- crossprod(yr, xr)
-    sres <- svdi(sigma, nu=min(dim(sigma)), nv=min(dim(sigma)))
-    for(ci in 1:ncomp) {
-      xr <- xis
-      yr <- yis
-      w <- sres$v[,1:ci,drop=FALSE]
-      cc <- sres$u[,1:ci,drop=FALSE]
-
-      tt <- xr %*% w
-      ts <- array(0, nrow=c(dim(tt), nocomp))
-      ts[,,1] <- tt
-      e <- xr - tcrossprod(tt, w)
-      tto <- ppo <- wwo <- ttoPrev <- NULL
-      if(nocomp > 0) {
-        for(oci in 1:nocomp) {
-          tm <- scores(pca(crosspred(e, tt), nPcs=1))
-          wo <- tm
-          wo <- wo / sqrt(drop(crossprod(wo)))
-
-          to <- xr %*% wo
-          po <- crossprod(xr, to / drop(crossprod(to)))
-
-          xr <- xr - tcrossprod(to, po)
-          tt <- xr %*% w
-          ts[,,(oci + 1)] <- ts
-          ttoPrev <- cbind(ttoPrev, tt)
-          tto <- cbind(too, to)
-          ppo <- cbind(ppo, po)
-          woo <- cbind(wwo, wo)
-
-          ep <- e
-          e <- xi - tcrossprod(tt, w) - tcrossprod(to, po)
-        }
-      }
-      yr <- yi
-      u <- yr %*% cc
-      us <- array(0, dim=c(dim(u), 1))
-      us[,,1] <- u
-      f <- yr - tcrossprod(u, cc)
-
-      if(nrow(seg) == 1){
-        rownames(tt) <- rownames(x)
-        rownames(u) <- rownames(ym)
-        rownames(w) <- colnames(x)
-        rownames(cc) <- colnames(ym)
-        if(!is.null(to)){
-          rownames(to) <- rownames(x)
-          rownames(po) <- colnames(x)
-        }
-      }
-      mod <- list(t=tt, w=w, u=u, c=cc, to=to, po=po,
-                  xm=xp$center, xs=xp$scale,
-                  ym=yp$center, ys=yp$scale)
-      if(nrow(seg) > 1) {
-        for(i in 1:nocomp) {
-          smod <- list(t=tt, w=w, u=u, c=cc, to=to, po=po,
-                       xm=xp$center, xs=xp$scale,
-                       ym=yp$center, ys=yp$scale)      
-                  
-        
