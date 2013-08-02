@@ -1,0 +1,133 @@
+\documentclass[a4paper]{article}
+
+%\VignetteIndexEntry{Introduction}
+
+\usepackage{hyperref}
+\usepackage{a4wide}
+
+\title{Detecting metabolite-transcript co-responses}
+\author{Henning Redestig and Ivan G. Costa}
+\date{\today}
+
+\begin{document}
+\setkeys{Gin}{width=1.0\textwidth}
+
+\maketitle
+\section{Introduction}
+
+The trainmet package can be used to calculate association statistics
+(measures of co-responses) between metabolites and transcripts using
+combined profiling time-course experiments. An example of application
+is to find transcripts that behave similarly to the metablolites in a
+given pathway. With similar, directly similar or inverted response
+possibly at a time-lag. See Redestig and Costa (2011) for more
+detailed introduction.
+
+\subsection{Dependencies}
+
+You must have the script \texttt{train\_rank.py} installed and working
+to be able to use the HMM; this package is only an interface to that
+script. The script provided with the package does not work
+out-of-the-box and must be installed separately. See instructions
+at\footnote{http://www.cin.ufpe.br/$\sim$igcf/Metabolites/scripts/hmm}.
+
+You also need the \texttt{pls} package and are recommended to
+look into \texttt{KEGG.db} package and chip specific annotation
+packages from Bioconductor.
+
+\section{Example}
+
+As an example, we consider the galactose metabolism related
+metabolites measured in the 9 time-point high CO$_2$-stress dataset by
+\cite{Dutta2009}. We here demonstrate how to score transcripts after
+how strongly they co-respond to the glactose synthesis related
+metabolites. 
+
+First we get association statistics using classical Pearson
+correlation for all the glactose synthesis related metabolites,
+\texttt{mdat}, to all genes, \texttt{tdat}.
+<<pearson>>=
+library(trainmet)
+data(mdat)
+data(tdat)
+pearson <- assocStat(tdat, mdat, use="pairwise")
+@ 
+for a three-state HMM we do (for this to work, you have to modify the
+path to \texttt{trank\_rank.py} to fit your installation)
+<<hmm>>=
+hmm3 <- assocStat(tdat, mdat, "hmm", states=3, 
+                  trainrank=system.file("extdata", "train_rank.py", package="trainmet"))
+@ 
+then, we can summarize the scores to consensus statistics
+<<summarize>>=
+library(org.At.tair.db)
+members <- fData(tdat)$agi %in% get("00052", org.At.tairPATH2TAIR)
+pearsonS <- consStat(pearson, members, cv=TRUE)
+hmm3S <- consStat(hmm3, members, cv=TRUE)
+hmm3pearsonS <- consStat(cbind(hmm3,pearson), members, cv=TRUE)
+@ 
+and then see how the differerent statistics score the true galactose metabolism
+members (Fig. \ref{fig:box}). 
+
+\begin{figure}[!ht]
+\centering
+<<box,fig=true, width=16, height=5, results=hide>>=
+par(mfrow=c(1,3))
+boxplot(pearsonS$ccthat~members, ylab="Consensus Pearson", 
+        xlab="Transcript  in the galactose metabolism pathway")
+boxplot(hmm3S$ccthat~members, ylab="Consensus HMM3", 
+        xlab="Transcript  in the galactose metabolism cycle pathway")
+boxplot(hmm3pearsonS$ccthat~members, ylab="Consensus HMM3+Pearson", 
+        xlab="Transcript  in the galactose metabolism cycle pathway")
+@
+\caption{\label{fig:box} In this example, HMM3 appears to give the
+  best separation of the truly galactose metabolism associated
+  transcripts from the other transcripts.}
+\end{figure}
+
+The correlation loadings from the statistic-summarization gives a way
+to see which metabolite had the strongest relevance for separating the
+true galactose metabolism related genes (Fig. \ref{fig:bar}).
+
+\begin{figure}[!ht]
+\centering
+<<pc,fig=true, width=16, height=5, results=hide>>=
+par(mfrow=c(1,3))
+barplot(pearsonS$ccp,las=2, ylab="Correlation loading")
+barplot(hmm3S$ccp,las=2, ylab="Correlation loading")
+barplot(hmm3pearsonS$ccp,las=2, ylab="Correlation loading")
+@
+\caption{\label{fig:bar} The influence of different metabolites on the
+  separation of truely glactose metabolism associated transcripts from
+  other transcripts based. Note that since absolute values are
+  considered, each metabolite is represented by bars, the positive
+  mode and negative mod (prefixed with an n)}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+<<line,fig=true, width=16, height=10, results=hide>>=
+pearson <- assocStat(tdat, mdat, absolute=FALSE, use="pairwise")
+colorLineplot(tdat, mdat, pearson, which(members), rows=2, cols=3)
+@
+\caption{\label{fig:line} Line plot of the expression and abundance
+  trajectories of galactose metabolism related genes and
+  metabolites. Only transcripts in the pathway are plotted. Color
+  intensity is proportional to the indicated rank (relative to the
+  whole dataset).}
+\end{figure}
+
+
+\begin{thebibliography}{10}
+\bibitem{Dutta2009} Dutta, B., Kanani, H., Quackenbush, J., and Klapa,
+  M. I. (2009). Time-series integrated omic analyses to elucidate
+  short-term stress-induced responses in plant liquid
+  cultures. Biotechnol Bioeng, 102(1), 264-279.
+
+\bibitem{Redestig2011} Redestig, H. and Costa, I. G. (2011) Detection
+  and interpretation of metabolite-transcript co-responses using
+  combined profiling data. \emph{Bioinformatics} submitted.
+\end{thebibliography}
+
+
+\end{document}

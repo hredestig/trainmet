@@ -1,0 +1,12 @@
+Package: trainmet
+Version: 0.0.3
+Date: 2011-03-15
+Author: Henning Redestig, Ivan G Costa
+Maintainer: Henning Redestig <henning.red@gmail.com>
+Title: trainmet
+Depends: Biobase, pls
+Suggests: KEGG.db, org.At.tair.db
+Description: Detect metabolite-transcript co-responses using hidden
+    Markov models.
+License: GPL (>= 3)
+Collate: 'misc.R' 'statistics.R' 'trainmet-package.R' 'trainrank.R'
