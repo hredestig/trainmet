@@ -20,6 +20,16 @@
 #' @references Redestig, H. and Costa, IG (submitted)
 #' @examples
 #' trainrank(rbind(sample(1:10)), rbind(rnorm(10)))
+#' metabolite <- jitter(c(1,1,1,2,2,2,6,6,6,6,6,2,2,2))
+#' associated_gene <- jitter(c(2,2,2,6,6,6,6,6,2,2,2,3,3,3))
+#' unassociated_genes <- t(replicate(50, rnorm(14)))
+#' mdat <- rbind(metabolite)
+#' tdat <- rbind(associated_gene, unassociated_genes)
+#' rownames(mdat) <- rownames(tdat) <- NULL
+#' matplot(cbind(metabolite, associated_gene), type='b')
+#' tt <- trainrank(mdat, tdat)
+#' barplot(tt$positive[,1])
+#' tt$plag[1,1]
 #' @author Henning Redestig
 #' @export
 trainrank <- function(mdat, tdat, states=3, cyclic=FALSE,
