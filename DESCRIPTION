@@ -3,6 +3,7 @@ Version: 0.0.3
 Date: 2011-03-15
 Author: Henning Redestig, Ivan G Costa
 Maintainer: Henning Redestig <henning.red@gmail.com>
+License: file LICENSE
 Title: trainmet
 Depends:
     Biobase,

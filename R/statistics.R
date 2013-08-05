@@ -227,30 +227,3 @@ accuracy <- function(hat, tru) {
   (tp + tn) / (tp + tn + fp + fn)
 }
 
-svdi <- function(x, threshold=0.01, maxSteps=100, ...) {
-  missing <- is.na(x)
-  temp <- apply(missing, 2, sum)
-  missIx <- which(temp != 0)
-  x[missing] <- 0
-  count <- 0
-  error <- Inf
-  while ((error > threshold) && (count < maxSteps)) {
-    res <- prcomp(t(x), center=FALSE, scale=FALSE, retx=TRUE)
-    loadings <- res$rotation
-    sDev <- res$sdev
-    for (index in missIx) {
-      target <- x[!missing[, index], index, drop = FALSE]
-      Apart <- loadings[!missing[, index], , drop = FALSE]
-      Bpart <- loadings[missing[, index], , drop = FALSE]
-      X <- ginv(Apart) %*% target
-      estimate <- Bpart %*% X
-      x[missing[, index], index] <- estimate
-    }
-    Count <- count + 1
-    if (count > 5)
-      error <- sqrt(sum((xOld - x)^2)/sum(xOld^2))
-    xOld <- x
-  }
-  svd(x, ...)
-}
-
