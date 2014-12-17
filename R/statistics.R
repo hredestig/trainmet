@@ -7,14 +7,13 @@
 ##' @param absolute logical indicting if inverted patterns also be
 ##' considered. For ordinary Pearson, this implies concatenating the
 ##' absolute correlations to the result.
-##' @param ... arguments passed on to the chosen method, i.e.,
-##'ode{cor} or \code{lagcor} or \code{trainrank} (for the HMM)
+##' @param ... arguments passed on to \code{trainrank}
 ##' @return A matrix with statistics
 ##' @examples
 ##' data(tdat)
 ##' data(mdat)
 ##' library(org.At.tair.db)
-##' stat <- assocStat(tdat, mdat, use="pairwise")
+##' stat <- assocStat(tdat, mdat)
 ##' members <- rep(FALSE, nrow(tdat))
 ##' members[match(get("00052", org.At.tairPATH2TAIR), fData(tdat)$agi, nomatch=0)] <- TRUE
 ##' cstat <- consStat(stat, members)
@@ -22,13 +21,13 @@
 ##' @export
 ##' @author Henning Redestig
 assocStat <- function(tdat, mdat, method=c("pearson","spearman","lagpearson", "hmm"),
-                      absolute=TRUE, ...) {
+                      absolute=TRUE, corMethod="pearson", ...) {
   method <- match.arg(method)
   mm <- t(exprs(mdat))
   tt <- t(exprs(tdat))
   stat <- switch(method,
                  pearson={
-                   tmp <- t(cor(mm, tt, ...))
+                   tmp <- t(cor(mm, tt, method=corMethod))
                    if(absolute)
                      tmp <- cbind(tmp, abs(tmp))
                    tmp
@@ -44,7 +43,7 @@ assocStat <- function(tdat, mdat, method=c("pearson","spearman","lagpearson", "h
                    tmp <- apply(mm, 2, function(x) {
                      apply(tt, 2,
                            function(y) {
-                             lagcor(x, y, ...)
+                             lagcor(x, y, method=corMethod)
                            })
                    })
                    if(absolute)
@@ -52,7 +51,7 @@ assocStat <- function(tdat, mdat, method=c("pearson","spearman","lagpearson", "h
                    tmp
                  },
                  hmm={
-                   tr <- trainrank(t(mm), t(tt))
+                   tr <- trainrank(t(mm), t(tt), ...)
                    tmp <- as.matrix(tr$positive)
                    if(absolute)
                      tmp <- cbind(tmp, as.matrix(tr$negative))
@@ -69,13 +68,13 @@ assocStat <- function(tdat, mdat, method=c("pearson","spearman","lagpearson", "h
 ##' @param x a numeric vector
 ##' @param y a numeric vector
 ##' @param lags lags to consider for the x-vector
-##' @param ... passed on to cor
+##' @param method passed on to \code{\link{cor})
 ##' @return the best correlation over the considered lags
 ##' @examples
 ##' lagcor(rnorm(10), rnorm(10), -3:3)
 ##' @export
 ##' @author henning
-lagcor <- function(x, y, lags=-2:2, ...) {
+lagcor <- function(x, y, lags=-2:2, method="pearson") {
   nx <- length(x)
    xx <- sapply(lags, function(l) {
      if(l == 0) return(x)
@@ -84,7 +83,7 @@ lagcor <- function(x, y, lags=-2:2, ...) {
        return(c(na, x[-((nx-(l-1)):nx)])) else
      return(c(x[-(1:abs(l))], na))
    })
-  cors <- cor(y, xx,  use="pair", ...)
+  cors <- cor(y, xx,  use="pair", method=method)
   tmp <- cors[which.max(abs(cors))]
   ifelse(length(tmp) > 0, tmp, NA)
 }

@@ -16,8 +16,11 @@
 #' @param scale logical indicating if the data should be scaled to
 #' unitvariance and centered. HMMs are very sensitive to this and
 #' scaling is strongly recommended.
+#' @param ... not used
 #' @return a list with results for negative and positive modes
-#' @references Redestig, H. and Costa, IG (submitted)
+#' @references Detection and interpretation of metabolite-transcript coresponses
+#' using combined profiling data.  Redestig H, Costa IG.Bioinformatics. 2011 Jul
+#' 1;27(13):i357-65. doi: 10.1093/bioinformatics/btr231.
 #' @examples
 #' trainrank(rbind(sample(1:10)), rbind(rnorm(10)))
 #' metabolite <- jitter(c(1,1,1,2,2,2,6,6,6,6,6,2,2,2))
@@ -36,7 +39,7 @@ trainrank <- function(mdat, tdat, states=3, cyclic=FALSE,
                       LD_LIBRARY_PATH="/usr/local/lib/",
                       trainrank=system.file("extdata", "train_rank.py", package="trainmet"),
                       python="python -W ignore",
-                      verbose=FALSE, cleanOnExit=TRUE, scale=TRUE) {
+                      verbose=FALSE, cleanOnExit=TRUE, scale=TRUE, ...) {
     hackm <- FALSE
     hackt <- FALSE
     if(nrow(mdat) < 2) {
